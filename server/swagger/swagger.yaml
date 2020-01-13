@@ -1,0 +1,400 @@
+swagger: '2.0'
+info:
+  title: BasiScript / BasiLex API
+  description: The Application Programming Interface for BasiScript / BasiLex
+  version: 1.0.0
+host: 'localhost:8080'
+basePath: /
+schemes:
+  - http
+produces:
+  - application/json
+parameters:
+  x-access-token:
+    name: x-access-token
+    in: header
+    description: The authorization token
+    required: true
+    type: string
+  corpus:
+    name: corpus
+    in: path
+    description: Which corpus to use
+    required: true
+    type: string
+    enum:
+      - basilex
+      - basiscript  
+securityDefinitions:
+   APIKeyHeader:
+     type: apiKey
+     in: header
+     name: x-access-token
+paths:
+  '/user/login':
+    post:
+      tags: 
+        - Authentication
+      summary: Retrieves access token with credentials
+      description: Login to retrieve token
+      consumes: 
+        - application/json
+      parameters:
+        - in: body
+          name: credentials
+          schema:
+            type: object
+            required:
+              - username
+              - password
+            properties:
+              username:
+                type: string
+              password:
+                type: string
+      responses:
+        '200':
+          description: OK
+          headers:
+            content-type:
+              type: string
+              description: The type of content.
+            x-access-token:
+              type: string
+              description: Your authorization token.
+        '401':
+          description: Unauthorized
+  '/user/logout':
+    post:
+      tags:
+        - Authentication
+      summary: Delete cookie with session token
+      description: Logout to end session
+      responses:
+        '200':
+          description: Ok
+        '400':
+          description: Invalid request
+  '/user/auth':
+    get:
+      security:
+      - APIKeyHeader: []
+      tags:
+        - Authentication
+      summary: Verifies access token
+      description: Validates the authorization token
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+  '/cql_query/{corpus}/{offset}':
+    post:
+      security:
+        - APIKeyHeader: []
+      tags:
+        - Query
+      summary: Sends query to server and retrieves result
+      description: Sends query to server and retrieves corresponding result
+      consumes:
+        - application/json
+      parameters:
+        - name: offset
+          in: path
+          description: The offset of where the endpoint needs to retrieve results
+          required: true
+          type: integer
+        - $ref: '#/parameters/corpus'
+        - name: query
+          in: body
+          description: The query with filters you want to send
+          schema:
+            properties:
+              query: 
+                type: string
+              grades:
+                type: object
+                properties:
+                  0: 
+                    type: boolean
+                  1: 
+                    type: boolean
+                  2: 
+                    type: boolean
+                  3:
+                    type: boolean
+                  4: 
+                    type: boolean
+                  5: 
+                    type: boolean
+                  6: 
+                    type: boolean
+                  7: 
+                    type: boolean
+                  8: 
+                    type: boolean
+                  1VO:
+                    type: boolean
+                  2VO: 
+                    type: boolean
+              documents:
+                type: object
+                properties:
+                  ondertitels: 
+                    type: boolean
+                  leesboek: 
+                    type: boolean
+                  zaakvakmethode:
+                    type: boolean
+                  newsfeed:
+                    type: boolean
+                  toets: 
+                    type: boolean
+                  strip: 
+                    type: boolean
+                  rekenmethode: 
+                    type: boolean
+                  taalmethode: 
+                    type: boolean
+      responses:
+        '200':
+            description: OK
+  '/frog/{corpus}/{id}':
+    get:
+      security:
+        - APIKeyHeader: []
+      summary: Retrieves file by the frog ID
+      tags:
+        - Query
+      parameters:
+        - name: id
+          in: path
+          description: The ID of the frog
+          required: true
+          type: string
+        - $ref: '#/parameters/corpus'
+      responses:
+        '200':
+          description: The frog file (XML)
+        '400':
+          description: Bad request
+  '/frog/{corpus}/{id}/file':
+    get:
+      security:
+        - APIKeyHeader: []
+      summary: Retrieves the frog information by its ID
+      tags:
+        - Query
+      parameters:
+        - name: id
+          in: path
+          description: The ID of the frog
+          required: true
+          type: string
+        - $ref: '#/parameters/corpus'
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              result:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  meta_data:
+                    type: integer
+                  file_name:
+                    type: string
+                  grade:
+                    type: integer
+                  document_type:
+                    type: string
+                  created_at:
+                    type: string
+                  updated_at:
+                    type: string
+        '400':
+          description: Bad request
+  '/query_export/{corpus}':
+    get:
+      security:
+        - APIKeyHeader: []
+      tags:
+        - Query
+      parameters:
+        - name: corpus
+          in: path
+          description: Which corpus to use
+          required: true
+          type: string
+          enum:
+            - basilex
+            - basiscript
+        - name: query
+          in: body
+          description: The query with filters and context
+          schema:
+            properties:
+              query:
+                type: string
+              grades:
+                type: object
+              documents:
+                type: object
+              context:
+                type: integer
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad request 
+  '/frequency/{corpus}/words/{offset}':
+    get:
+      security:
+        - APIKeyHeader: []
+      tags:
+        - Frequency
+      summary: Retrieves word frequency
+      description: Retrieves information about the frequency of the prompted word(s)
+      parameters:
+        - name: offset
+          in: path
+          description: The offset of where the endpoint needs to retrieve results
+          required: true
+          type: integer
+        - $ref: '#/parameters/corpus'
+        - name: queries
+          in: query
+          description: The words, lemmas, or part of speech you want to search (seperated by commas, you can search for multiple words, lemmas, or part of speech at once), for example ["en", "maar"]. You can also specify the part of speech with a '|' sign in the form of word|pos. For example ["werken|WW"] will only show the word 'werken' which is used as a verb.
+          required: true
+          type: string
+        - name: strict
+          in: query
+          description: Strict mode enables you to search for the exact word(s) queried
+          type: boolean
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              result:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: The unique identifier of the word
+                      example: '5ece0570-1cca-4c9f-8c0b-3892abc9ecfe'
+                    word:
+                      type: string
+                      description: The word
+                    lemma:
+                      type: string
+                      description: The lemma of the word
+                    pos:
+                      type: string
+                      description: The word's part of speech
+                      example: 'N'
+                    total_frequency:
+                      type: integer
+                      description: The word's total frequency
+                    kinder_garten_group_012:
+                      type: integer
+                    group_3:
+                      type: integer
+                    group_4:
+                      type: integer
+                    group_5:
+                      type: integer
+                    group_6:
+                      type: integer
+                    group_7:
+                      type: integer
+                    group_8:
+                      type: integer
+                    VO_1_2:
+                      type: integer
+                    geometric_mean:
+                      type: number
+                      description: The geometric mean of the word
+                    created_at:
+                      type: string
+                      description: The timestamp the word was created
+                      example: "2019-01-01T00:00:00.009Z"
+                    updated_at:
+                      type: string
+                      description: The timestamp the word was updated
+                      example: "2019-01-01T00:00:00.009Z"
+        '400':
+          description: Bad request
+  '/frequency_export/{corpus}':
+    get:
+      security:
+        - APIKeyHeader: []
+      tags:
+        - Frequency
+      parameters:
+        - name: corpus
+          in: path
+          description: Which corpus to use
+          required: true
+          type: string
+          enum:
+            - basilex
+            - basiscript
+        - name: query
+          in: body
+          description: The queries with indication of strict and search mode
+          schema:
+            properties:
+              queries:
+                type: object
+              strict:
+                type: boolean
+              searchMode:
+                type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad request    
+definitions:
+  wordBody:
+    type: object
+    properties:
+      id: 
+        type: string
+        description: The unique identifier of the word
+        example: '5ece0570-1cca-4c9f-8c0b-3892abc9ecfe'
+      text:
+        type: string
+      length: 
+        type: integer
+      lemma:
+        type: string
+      morphology:
+        type: string
+      pos:
+        type: string
+      position_in_sentence:
+        type: integer
+      position_in_paragraph:
+        type: integer
+      created_at: 
+        type: string
+      updated_at:
+        type: string
+      sentence_id:
+        type: string
+      paragraph_id:
+        type: string
+      frog_id:
+        type: string
+      previous_word_id:
+        type: string
+      next_word_id:
+        type: string

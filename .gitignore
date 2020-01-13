@@ -1,0 +1,7 @@
+/node_modules
+/javaApp/bin
+/npm-debug.log
+/jsconfig.json
+/dist
+/server/resources/basiscript
+
